@@ -8,6 +8,8 @@ RAW_PATH = Path(__file__).resolve().parents[1] / "data" / "raw" / "manutencoes.c
 def carregar_dados_brutos(caminho=RAW_PATH):
     df = pd.read_csv(caminho)
     df["data_servico"] = pd.to_datetime(df["data_servico"], format="%d/%m/%Y")
+    # export do SAP B1 vem com vírgula decimal, sem isso o pandas lê "custo" como string
+    df["custo"] = df["custo"].astype(str).str.replace(",", ".").astype(float)
     return df
 
 
