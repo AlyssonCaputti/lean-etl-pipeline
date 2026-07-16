@@ -1,6 +1,6 @@
 # Lean ETL Pipeline
 
-Pipeline simples em Python pra praticar /transform/load. Simula
+Pipeline simples em Python pra praticar extract/transform/load. Simula
 ordens de manutenção de frota (baseado no tipo de dado que trabalho no
 dia a dia) e agrega custo por tipo de serviço e regional num SQLite local.
 
