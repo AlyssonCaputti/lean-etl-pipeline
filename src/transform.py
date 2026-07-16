@@ -1,8 +1,9 @@
 from pathlib import Path
-
+from src.quality_checks import (
+    validar_entrada,
+    validar_saida,
+)  # ADICIONA essa linha no topo
 import pandas as pd
-
-RAW_PATH = Path(__file__).resolve().parents[1] / "data" / "raw" / "manutencoes.csv"
 
 
 def carregar_dados_brutos(caminho=RAW_PATH):
@@ -23,7 +24,11 @@ def limpar_dados(df):
 def agregar_por_tipo_regional(df):
     agrupado = (
         df.groupby(["tipo_servico", "regional"])
-        .agg(custo_total=("custo", "sum"), qtd_servicos=("custo", "count"), custo_medio=("custo", "mean"))
+        .agg(
+            custo_total=("custo", "sum"),
+            qtd_servicos=("custo", "count"),
+            custo_medio=("custo", "mean"),
+        )
         .reset_index()
         .sort_values("custo_total", ascending=False)
     )
@@ -34,9 +39,14 @@ def agregar_por_tipo_regional(df):
 
 def pipeline_transform(caminho=RAW_PATH):
     df = carregar_dados_brutos(caminho)
+    validar_entrada(df)  # ADICIONA: Porta 1, antes de limpar
     df = limpar_dados(df)
-    return agregar_por_tipo_regional(df)
+    agregado = agregar_por_tipo_regional(df)
+    validar_saida(agregado)  # ADICIONA: Porta 2, antes de retornar/gravar
+    return agregado
 
+
+RAW_PATH = Path(__file__).resolve().parents[1] / "data" / "raw" / "manutencoes.csv"
 
 if __name__ == "__main__":
     print(pipeline_transform().head(10))
