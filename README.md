@@ -4,7 +4,7 @@ ETL em camadas pra praticar extract/transform/load com validação de qualidade
 levada a sério. Simula ordens de manutenção de frota (o tipo de dado que eu mexo
 no dia a dia) e agrega custo por tipo de serviço e regional num SQLite local.
 
-O que faz esse projeto valer a leitura não é o ETL — é onde ficam as checagens.
+O que faz esse projeto valer a leitura não é o ETL, é onde ficam as checagens.
 
 ## As duas portas
 
@@ -22,7 +22,7 @@ transform.py ->  limpa e agrega
 load.py     ->  SQLite
 ```
 
-**Porta 1** olha o dado cru. Se falha aqui, o problema não é meu código — é o que
+**Porta 1** olha o dado cru. Se falha aqui, o problema não é meu código, é o que
 chegou. Layout diferente, coluna faltando, custo negativo, data no futuro.
 
 **Porta 2** olha o agregado, antes de gravar. Se falha aqui, o problema **é** meu
@@ -34,7 +34,7 @@ faz abrir o `transform.py`.
 
 ## O check que eu acho mais importante
 
-`checar_soma_preservada()` — compara a soma antes e depois da agregação:
+`checar_soma_preservada()` compara a soma antes e depois da agregação:
 
 ```python
 total_antes  = df_origem["custo"].sum()
@@ -45,7 +45,7 @@ if abs(total_antes - total_depois) > 0.01:
 
 É o único check que pega `groupby` com chave errada, join que multiplicou linha ou
 filtro que comeu dado. Sem ele, o total vai errado pro dashboard **e continua
-parecendo plausível** — que é o pior tipo de erro, porque ninguém desconfia.
+parecendo plausível**, que é o pior tipo de erro, porque ninguém desconfia.
 
 ## Quarentena
 
@@ -98,7 +98,7 @@ data/processed/      warehouse.db (gerado)
 ## Bugs que este repo já teve, e o que aprendi
 
 **1. Teste que passava com pipeline quebrado.** Escrevi os testes unitários usando
-um DataFrame já limpo no fixture, então eles passavam — mas o `load.py` quebrava
+um DataFrame já limpo no fixture, então eles passavam, mas o `load.py` quebrava
 ponta a ponta. O CSV simula o export do SAP B1, que vem com vírgula decimal, e o
 pandas lia `custo` como string.
 
@@ -106,7 +106,7 @@ Correção: teste que lê o CSV de verdade (`test_carregar_dados_brutos_converte
 não um DataFrame mockado.
 
 **2. Fixture testando um schema que não existia.** O `quality_checks.py` validava
-`id_manutencao` e `data_manutencao`. O CSV real tem `placa` e `data_servico` — e
+`id_manutencao` e `data_manutencao`. O CSV real tem `placa` e `data_servico`, e
 nem tem `id_manutencao`. Os testes passavam porque o fixture inventava as colunas;
 o pipeline real estourava `KeyError`.
 
@@ -114,7 +114,7 @@ Correção: fixture com as colunas reais da origem, e um `checar_colunas_esperad
 que falha dizendo qual coluna faltou em vez de dar `KeyError` no meio da validação.
 
 **3. Import de função que não existia.** O `transform.py` importava `validar_saida`
-do `quality_checks`, que nunca tinha sido escrita — `ImportError` no `import`. E o
+do `quality_checks`, que nunca tinha sido escrita: `ImportError` no `import`. E o
 `RAW_PATH` estava definido *depois* das funções que o usavam como valor default,
 o que dá `NameError`, porque default de parâmetro é avaliado quando a função é
 definida, não quando é chamada.
@@ -123,7 +123,7 @@ Correção: `validar_saida()` escrita, `RAW_PATH` movido pro topo.
 
 ## O que não tem aqui
 
-Não tem orquestração nem CI — de propósito, é um projeto pequeno pra fixar ETL em
+Não tem orquestração nem CI, de propósito: é um projeto pequeno pra fixar ETL em
 camadas testáveis. Essas partes estão cobertas em
 [frota-brasil-pipeline](https://github.com/AlyssonCaputti/frota-brasil-pipeline),
 que tem DAG do Airflow com dependência entre tarefas e CI que roda o pipeline
