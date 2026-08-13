@@ -1,2 +1,5 @@
-pandas>=2.0.0
-pytest>=7.0.0
+# Versoes fixadas: sem isso um `pip install` daqui a 6 meses pega uma versao
+# nova do pandas e o pipeline pode quebrar por mudanca de comportamento, nao
+# por bug meu. Testado com estas.
+pandas==3.0.1
+pytest==8.4.2

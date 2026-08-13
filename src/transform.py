@@ -1,9 +1,20 @@
+"""
+Transform: le o CSV bruto, limpa e agrega custo por tipo de servico e regional.
+
+O fluxo passa por duas portas de qualidade (ver quality_checks.py): uma no dado
+cru, outra no agregado. A segunda recebe tambem o df de origem pra reconciliar
+a soma - sem isso, um groupby com chave errada passa despercebido.
+"""
+
 from pathlib import Path
-from src.quality_checks import (
-    validar_entrada,
-    validar_saida,
-)  # ADICIONA essa linha no topo
+
 import pandas as pd
+
+from src.quality_checks import validar_entrada, validar_saida
+
+# Precisa vir antes dos def: valor default de parametro e avaliado quando a
+# funcao e definida, nao quando e chamada.
+RAW_PATH = Path(__file__).resolve().parents[1] / "data" / "raw" / "manutencoes.csv"
 
 
 def carregar_dados_brutos(caminho=RAW_PATH):
@@ -15,9 +26,20 @@ def carregar_dados_brutos(caminho=RAW_PATH):
 
 
 def limpar_dados(df):
-    # tira linha sem placa/tipo/custo e custo negativo (não deveria existir mas segue o jogo)
+    """Tira linha sem placa/tipo/custo, e custo zerado ou negativo.
+
+    Conto o descarte e imprimo em vez de sumir com ele calado: a diferenca
+    entre o que entrou e o que saiu daqui e a unica pista de que a origem
+    mandou sujeira.
+    """
+    antes = len(df)
     df = df.dropna(subset=["placa", "tipo_servico", "custo"])
     df = df[df["custo"] > 0]
+    descartadas = antes - len(df)
+
+    if descartadas:
+        print(f"limpar_dados: {descartadas} de {antes} linha(s) descartada(s)")
+
     return df
 
 
@@ -39,14 +61,14 @@ def agregar_por_tipo_regional(df):
 
 def pipeline_transform(caminho=RAW_PATH):
     df = carregar_dados_brutos(caminho)
-    validar_entrada(df)  # ADICIONA: Porta 1, antes de limpar
-    df = limpar_dados(df)
-    agregado = agregar_por_tipo_regional(df)
-    validar_saida(agregado)  # ADICIONA: Porta 2, antes de retornar/gravar
+
+    validar_entrada(df)                   # Porta 1: o dado como veio da origem
+    df_limpo = limpar_dados(df)
+    agregado = agregar_por_tipo_regional(df_limpo)
+    validar_saida(agregado, df_limpo)     # Porta 2: agregado + reconciliacao da soma
+
     return agregado
 
-
-RAW_PATH = Path(__file__).resolve().parents[1] / "data" / "raw" / "manutencoes.csv"
 
 if __name__ == "__main__":
     print(pipeline_transform().head(10))

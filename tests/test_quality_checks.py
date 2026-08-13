@@ -18,11 +18,19 @@ from src.quality_checks import (
 
 
 def df_base() -> pd.DataFrame:
+    """Mesmas colunas do CSV que a origem manda de verdade.
+
+    Antes esse fixture usava id_manutencao/data_manutencao, que nao existem no
+    export do ERP - os testes passavam contra um schema imaginario enquanto o
+    pipeline real quebrava com KeyError.
+    """
     return pd.DataFrame(
         {
-            "id_manutencao": [1, 2, 3],
+            "data_servico": ["01/01/2026", "01/02/2026", "01/03/2026"],
+            "placa": ["PR0001", "PR0002", "PR0003"],
+            "tipo_servico": ["Freios", "Pneus", "Suspensão"],
+            "regional": ["Curitiba", "Londrina", "Joinville"],
             "custo": [100.0, 200.0, 300.0],
-            "data_manutencao": ["2026-01-01", "2026-02-01", "2026-03-01"],
         }
     )
 
@@ -34,15 +42,15 @@ def test_dataframe_vazio_estoura_erro():
 
 def test_chave_nula_estoura_erro():
     df = df_base()
-    df.loc[0, "id_manutencao"] = None
+    df.loc[0, "placa"] = None
     with pytest.raises(FalhaQualidadeDados):
-        checar_chave_nao_nula(df, "id_manutencao")
+        checar_chave_nao_nula(df, "placa")
 
 
 def test_chave_duplicada_estoura_erro():
     df = pd.concat([df_base(), df_base().iloc[[0]]], ignore_index=True)
     with pytest.raises(FalhaQualidadeDados):
-        checar_chave_unica(df, "id_manutencao")
+        checar_chave_unica(df, "placa")
 
 
 def test_custo_negativo_estoura_erro():
